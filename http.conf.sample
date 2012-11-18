@@ -1,0 +1,21 @@
+<source>
+  type http_status
+  tag http.status
+  url https://rubygems.org
+  polling_time 1m
+
+  #port 80
+  #basic_user user
+  #basic_password pass
+  #proxy_address proxy.test.jp
+  #proxy_port 8080
+  #proxy_user user
+  #proxy_password pass
+  #params server,date
+  #open_timeout 10
+  #read_timeout 20
+</source>
+
+<match http.*>
+  type stdout
+</match>
