@@ -127,12 +127,17 @@ module Fluent
       }
 
       hash[:response_time] = Time.now - start
-
       return hash
     rescue Timeout::Error => ex
-      return "Timeout Error : #{ex}"
+      $log.error "Timeout Error : #{ex.message}"
+      hash[:code] = 408
+      hash[:message] = ex.message
+      return hash
     rescue => ex
-      return ex.message
+      $log.error ex.message
+      hash[:code] = 000
+      hash[:message] = ex.message
+      return hash
     end
 
   end
