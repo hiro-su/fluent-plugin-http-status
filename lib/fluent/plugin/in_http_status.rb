@@ -126,7 +126,8 @@ module Fluent
         end
       }
 
-      hash[:response_time] = Time.now - start
+      response_time = Time.now - start
+      hash[:response_time] = response_time * 1000
       return hash
     rescue Timeout::Error => ex
       $log.error "Timeout Error : #{ex.message}"
