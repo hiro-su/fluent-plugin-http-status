@@ -4,6 +4,9 @@ require "net/https"
 require "uri" 
 require "socket"
 
+ENV['LC_ALL'] = 'C'
+Encoding.default_external = 'ascii-8bit' if RUBY_VERSION > '1.9'
+
 module Fluent
   class HttpStatusInput < Input
     Plugin.register_input('http_status',self)
@@ -15,10 +18,10 @@ module Fluent
     config_param :proxy_port, :integer, :default => nil
     config_param :proxy_user, :string, :default => nil
     config_param :proxy_password, :string, :default => nil
-    config_param :open_timeout, :integer, :default => 10
+    config_param :open_timeout, :integer, :default => 20
     config_param :read_timeout, :integer, :default => 20
     config_param :params, :string, :default => nil
-    config_param :polling_time, :string
+    config_param :polling_time, :string, :default => "1m"
     config_param :basic_user, :string, :default => nil
     config_param :basic_password, :string, :default => nil
 
@@ -91,6 +94,13 @@ module Fluent
       port = uri.port
       request_uri = uri.request_uri
 
+      hash["url"] = url
+      hash["host"] = host
+      hash["port"] = port
+      hash["request_uri"] = request_uri
+      hash["proxy_address"] = @proxy_address if @proxy_address
+      hash["proxy_port"] = @proxy_port if @proxy_port
+
       http = Net::HTTP.new(host,port,@proxy_address,@proxy_port,@proxy_user,@proxy_password)
       http.open_timeout = @open_timeout
       http.read_timeout = @read_timeout
@@ -105,39 +115,31 @@ module Fluent
       req.basic_auth @basic_user, @basic_password
       response = http.request(req)
 
-      hash[:url] = url
-      hash[:host] = host
-      hash[:port] = port
-      hash[:request_uri] = request_uri
-      hash[:proxy_address] = @proxy_address if @proxy_address
-      hash[:proxy_port] = @proxy_port if @proxy_port
-      hash[:code] = response.code.to_i
-      hash[:message] = response.message
-      hash[:class_name] = response.class.name
+      hash["code"] = response.code.to_i
+      hash["message"] = response.message
+      hash["class_name"] = response.class.name
       hostent = Socket.gethostbyname(host)
-      hash[:ipaddress] = hostent[3].unpack("C4").join('.')
-      hash[:headers] = Hash.new
+      hash["ipaddress"] = hostent[3].unpack("C4").join('.')
+      hash["headers"] = Hash.new
 
       response.each_key{|name|
         if @params
-          @params.each{|param| hash[:headers][param] = response[param] =~ /^-?\d+$/ ? response[param].to_i : response[param]}
+          @params.each{|param| hash["headers"][param] = response[param] =~ /^-?\d+$/ ? response[param].to_i : response[param]}
         else
-          hash[:headers][name] = response[name] =~ /^-?\d+$/ ? response[name].to_i : response[name]
+          hash["headers"][name] = response[name] =~ /^-?\d+$/ ? response[name].to_i : response[name]
         end
       }
 
-      response_time = Time.now - start
-      hash[:response_time] = response_time * 1000
-      return hash
     rescue Timeout::Error => ex
-      $log.error "Timeout Error : #{ex.message}"
-      hash[:code] = 408
-      hash[:message] = ex.message
-      return hash
+      $log.error "Timeout Error : #{url}:#{port}#{request_uri}"
+      hash["code"] = 408
+      hash["message"] = ex.message
     rescue => ex
-      $log.error ex.message
-      hash[:code] = 000
-      hash[:message] = ex.message
+      $log.error "#{ex.message} : #{url}:#{port}#{request_uri}"
+      hash["code"] = 0
+      hash["message"] = ex.message
+    ensure
+      hash["response_time"] = (Time.now - start) * 1000 #msec
       return hash
     end
 

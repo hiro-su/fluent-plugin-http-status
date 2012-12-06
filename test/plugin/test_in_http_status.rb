@@ -30,6 +30,22 @@ class HttpStatusInputTest < Test::Unit::TestCase
   end
 
   def test_configure
+    assert_raise(Fluent::ConfigError) {
+      d = create_driver('')
+    }
+    
+    assert_raise(Fluent::ConfigError) {
+      d = create_driver %[
+            tag http.status
+          ] 
+    }
+    
+    assert_raise(Fluent::ConfigError) {
+      d = create_driver %[
+            url http://example.com
+          ] 
+    }
+    
     d = create_driver
 
     assert_equal "http.status", d.instance.tag
@@ -58,7 +74,7 @@ class HttpStatusInputTest < Test::Unit::TestCase
     }
 
     headers = {}
-    headers[:headers] = {
+    headers["headers"] = {
       "server" => "Apache",
       "date" => "Sun, 18 Nov 2012 17:12:09 GMT",
       "last-modified" => "Thu, 15 Nov 2012 02:00:30 GMT",
@@ -71,22 +87,23 @@ class HttpStatusInputTest < Test::Unit::TestCase
     }
 
     Socket.stubs(:gethostbyname).returns(["www.test.ad.jp", [], 0, "\xC0\xA8\x00\x01"])
-    WebMock.stub_request(:head, "www.test.ad.jp").to_return(:status => 200, :headers => headers[:headers])
+    WebMock.stub_request(:head, "www.test.ad.jp").to_return(:status => 200, :headers => headers["headers"])
     res_data = @obj.__send__(:get_status,@hash,args)
-    res_data[:response_time] = 0.001239
+    res_data["response_time"] = 1.239
     
     result_hash = {
-      :url=>"http://www.test.ad.jp",
-      :host=>"www.test.ad.jp", 
-      :port=>80, :request_uri=>"/",
-      :proxy_address=>"proxy.test.jp",
-      :proxy_port=>8080,
-      :code=>200,
-      :message=>"",
-      :class_name=>"Net::HTTPOK",
-      :ipaddress=>"192.168.0.1",
-      :response_time=>0.001239,
-      :headers=>{
+      "url"=>"http://www.test.ad.jp",
+      "host"=>"www.test.ad.jp", 
+      "port"=>80,
+      "request_uri"=>"/",
+      "proxy_address"=>"proxy.test.jp",
+      "proxy_port"=>8080,
+      "code"=>200,
+      "message"=>"",
+      "class_name"=>"Net::HTTPOK",
+      "ipaddress"=>"192.168.0.1",
+      "response_time"=>1.239,
+      "headers"=>{
         "server"=>"Apache",
         "date"=>"Sun, 18 Nov 2012 17:12:09 GMT",
         "last-modified"=>"Thu, 15 Nov 2012 02:00:30 GMT", 
