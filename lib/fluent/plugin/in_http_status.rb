@@ -22,8 +22,11 @@ module Fluent
     config_param :read_timeout, :integer, :default => 20
     config_param :params, :string, :default => nil
     config_param :polling_time, :string, :default => "1m"
+    config_param :polling_offset, :time, :default => 0
+    config_param :polling_type, :string, :default => "async_run" #or run
     config_param :basic_user, :string, :default => nil
     config_param :basic_password, :string, :default => nil
+    config_param :retry, :integer, :default => 5
 
     def configure(conf)
       super
@@ -43,7 +46,8 @@ module Fluent
     end
 
     def run
-      Polling::run(@polling_time) do
+      Polling.setting offset: @polling_offset
+      Polling.__send__(@polling_type, @polling_time) do
         record = Hash.new
         args = {
           :url => @url,
@@ -62,16 +66,20 @@ module Fluent
       exit
     rescue => ex
       $log.error "run failed", :error=>ex.message
-      sleep(10)
       @retry_count += 1
-      retry if @retry_count < 30
+      retry if @retry_count < @retry
+      exit
     end
 
     def shutdown
       @end_flag ||= true
-      @thread.run
-      @thread.join
-      @starter.join
+      if @thread
+        @thread.run
+        @thread.join
+      end 
+      if @starter
+        @starter.join
+      end
     end
 
     private
