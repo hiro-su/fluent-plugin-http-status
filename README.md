@@ -1,4 +1,4 @@
-# Fluent::Plugin::Http::Status
+# Fluent::Plugin::Http::Status, a plugin for [Fluentd](http://fluentd.org)
 
 Fluentd input plugin for to get the http status.
 
