@@ -3,6 +3,7 @@ require "net/http"
 require "net/https"
 require "uri" 
 require "socket"
+require "fluent/input"
 
 ENV['LC_ALL'] = 'C'
 Encoding.default_external = 'ascii-8bit' if RUBY_VERSION > '1.9'
