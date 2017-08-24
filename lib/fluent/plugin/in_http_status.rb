@@ -43,6 +43,7 @@ module Fluent
     end
 
     def start
+      super
       starter{@thread=Thread.new(&method(:run))}
     end
 
@@ -81,6 +82,7 @@ module Fluent
       if @starter
         @starter.join
       end
+      super
     end
 
     private
