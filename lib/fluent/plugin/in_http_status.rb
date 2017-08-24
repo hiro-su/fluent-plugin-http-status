@@ -12,6 +12,11 @@ module Fluent
   class HttpStatusInput < Input
     Plugin.register_input('http_status',self)
 
+    # Define `router` method of v0.12 to support v0.10 or earlier
+    unless method_defined?(:router)
+      define_method("router") { Fluent::Engine }
+    end
+
     config_param :tag, :string
     config_param :url, :string
     config_param :port, :integer, :default => nil
@@ -60,7 +65,7 @@ module Fluent
           :proxy_password => @proxy_password,
           :params => @params
         }
-        Engine.emit(@tag, Engine.now, get_status(record,args))
+        router.emit(@tag, Engine.now, get_status(record,args))
         break if @end_flag
       end
     rescue TypeError => ex
