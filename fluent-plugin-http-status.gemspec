@@ -18,6 +18,8 @@ Gem::Specification.new do |gem|
   
   gem.add_development_dependency "fluentd"
   gem.add_development_dependency "polling"
+  gem.add_development_dependency "rake", "~> 12.0"
+  gem.add_development_dependency "test-unit", "~> 3.2"
   gem.add_runtime_dependency "fluentd"
   gem.add_runtime_dependency "polling"
 end

@@ -3,6 +3,7 @@ require "net/http"
 require "net/https"
 require "uri" 
 require "socket"
+require "fluent/input"
 
 ENV['LC_ALL'] = 'C'
 Encoding.default_external = 'ascii-8bit' if RUBY_VERSION > '1.9'
@@ -10,6 +11,11 @@ Encoding.default_external = 'ascii-8bit' if RUBY_VERSION > '1.9'
 module Fluent
   class HttpStatusInput < Input
     Plugin.register_input('http_status',self)
+
+    # Define `router` method of v0.12 to support v0.10 or earlier
+    unless method_defined?(:router)
+      define_method("router") { Fluent::Engine }
+    end
 
     config_param :tag, :string
     config_param :url, :string
@@ -42,6 +48,7 @@ module Fluent
     end
 
     def start
+      super
       starter{@thread=Thread.new(&method(:run))}
     end
 
@@ -58,7 +65,7 @@ module Fluent
           :proxy_password => @proxy_password,
           :params => @params
         }
-        Engine.emit(@tag, Engine.now, get_status(record,args))
+        router.emit(@tag, Engine.now, get_status(record,args))
         break if @end_flag
       end
     rescue TypeError => ex
@@ -80,6 +87,7 @@ module Fluent
       if @starter
         @starter.join
       end
+      super
     end
 
     private
