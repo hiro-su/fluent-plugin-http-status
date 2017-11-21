@@ -9,7 +9,7 @@ Gem::Specification.new do |gem|
   gem.email         = ["h.sugipon@gmail.com"]
   gem.description   = %q{Fluentd input plugin for to get the http status}
   gem.summary       = %q{Fluentd input plugin for to get the http status}
-  gem.homepage      = ""
+  gem.homepage      = "https://github.com/hiro-su/fluent-plugin-http-status"
 
   gem.files         = `git ls-files`.split($/)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
